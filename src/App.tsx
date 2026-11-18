@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import CodeLock from './CodeLock'
 import { QUEST, STEPS } from './quest'
+import { isMuted, setMuted, sfxError, sfxFinale, sfxSuccess } from './sound'
 
 const KEY = 'quest-progress-v2'
 const TOTAL = STEPS.length
@@ -15,7 +16,13 @@ const CODE_TO_STAGE: Record<string, number> = {
 // stage: 0 = ввести стартовий код, 1..TOTAL = завдання, TOTAL+1 = фінал
 function load(): number {
   try {
-    if (new URL(location.href).searchParams.has('reset')) localStorage.removeItem(KEY)
+    const url = new URL(location.href)
+    if (url.searchParams.has('reset')) {
+      localStorage.removeItem(KEY)
+      // прибираємо ?reset з адреси, щоб оновлення сторінки не скидало прогрес знову
+      url.searchParams.delete('reset')
+      history.replaceState(null, '', url.pathname + url.search + url.hash)
+    }
     const raw = localStorage.getItem(KEY)
     if (raw === null) return 0
     const v = Number(raw)
@@ -27,6 +34,7 @@ function load(): number {
 
 export default function App() {
   const [stage, setStage] = useState<number>(load)
+  const [muted, setMute] = useState<boolean>(isMuted)
 
   useEffect(() => {
     try { localStorage.setItem(KEY, String(stage)) } catch { /* ignore */ }
@@ -35,7 +43,12 @@ export default function App() {
 
   const tryCode = (c: string): boolean => {
     const t = CODE_TO_STAGE[c]
-    if (t !== undefined && t > stage) { setStage(t); return true }
+    if (t !== undefined && t > stage) {
+      setStage(t)
+      setTimeout(t === TOTAL + 1 ? sfxFinale : sfxSuccess, 120)
+      return true
+    }
+    sfxError()
     return false
   }
 
@@ -44,6 +57,13 @@ export default function App() {
 
   return (
     <main className="screen">
+      <button
+        className="mc-btn mute"
+        aria-label={muted ? 'увімкнути звук' : 'вимкнути звук'}
+        onClick={() => { setMuted(!muted); setMute(!muted) }}
+      >
+        {muted ? '🔇' : '🔊'}
+      </button>
       <h1 className="logo">{QUEST.title}</h1>
 
       {step && (

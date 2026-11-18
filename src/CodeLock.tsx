@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { sfxPress, sfxTick } from './sound'
 
 type Props = { onSubmit: (code: string) => boolean; label?: string }
 
@@ -7,10 +8,13 @@ export default function CodeLock({ onSubmit, label = 'ВІДКРИТИ' }: Props
   const [digits, setDigits] = useState([0, 0, 0, 0])
   const [shake, setShake] = useState(false)
 
-  const change = (i: number, d: number) =>
+  const change = (i: number, d: number) => {
+    sfxTick()
     setDigits((p) => p.map((v, k) => (k === i ? (v + d + 10) % 10 : v)))
+  }
 
   const submit = () => {
+    sfxPress()
     const ok = onSubmit(digits.join(''))
     if (!ok) {
       setShake(true)
