@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import CodeLock from './CodeLock'
 import { QUEST, STEPS } from './quest'
-import { isMuted, setMuted, sfxError, sfxFinale, sfxSuccess } from './sound'
+import { isMuted, setMuted, sfxError, sfxSuccess } from './sound'
 
 const KEY = 'quest-progress-v2'
 const TOTAL = STEPS.length
@@ -10,10 +10,12 @@ const TOTAL = STEPS.length
 // (наприклад, у вбудованому браузері Телеграма), вводимо код останньої записки.
 const CODE_TO_STAGE: Record<string, number> = {
   [QUEST.startCode]: 1,
-  ...Object.fromEntries(STEPS.map((st, i) => [st.code, i + 2])),
+  ...Object.fromEntries(
+    STEPS.flatMap((st, i) => (st.code ? [[st.code, i + 2]] : [])),
+  ),
 }
 
-// stage: 0 = ввести стартовий код, 1..TOTAL = завдання, TOTAL+1 = фінал
+// stage: 0 = ввести стартовий код, 1..TOTAL = завдання (останнє — без коду)
 function load(): number {
   try {
     const url = new URL(location.href)
@@ -26,7 +28,7 @@ function load(): number {
     const raw = localStorage.getItem(KEY)
     if (raw === null) return 0
     const v = Number(raw)
-    return Number.isInteger(v) && v >= 0 && v <= TOTAL + 1 ? v : 0
+    return Number.isInteger(v) && v >= 0 && v <= TOTAL ? v : 0
   } catch {
     return 0
   }
@@ -45,7 +47,7 @@ export default function App() {
     const t = CODE_TO_STAGE[c]
     if (t !== undefined && t > stage) {
       setStage(t)
-      setTimeout(t === TOTAL + 1 ? sfxFinale : sfxSuccess, 120)
+      setTimeout(sfxSuccess, 120)
       return true
     }
     sfxError()
@@ -96,20 +98,15 @@ export default function App() {
             <h2>{step.title}</h2>
             {step.subtitle && <p className="sub">({step.subtitle})</p>}
             {step.text.map((t, i) => <p key={i}>{t}</p>)}
-            <h3>Введи код із записки:</h3>
-            <CodeLock
-              key={stage}
-              onSubmit={tryCode}
-            />
+            {step.code && (
+              <>
+                <h3>Введи код із записки:</h3>
+                <CodeLock key={stage} onSubmit={tryCode} />
+              </>
+            )}
           </>
         )}
 
-        {stage === TOTAL + 1 && (
-          <>
-            <h2>🏆 ПЕРЕМОГА!</h2>
-            <p>{QUEST.finale}</p>
-          </>
-        )}
       </section>
     </main>
   )
