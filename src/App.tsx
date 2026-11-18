@@ -69,7 +69,6 @@ export default function App() {
       {step && (
         <div className="xp" aria-label="прогрес">
           <div className="xp-fill" style={{ width: `${pct}%` }} />
-          <span className="xp-num">{stage}/{TOTAL}</span>
         </div>
       )}
 
@@ -78,7 +77,6 @@ export default function App() {
           <>
             <h2>Привіт, {QUEST.heroName}!</h2>
             <p>{QUEST.gateText}</p>
-            <p className="sub">Вже грав і щось злетіло? Введи код із останньої знайденої записки — і продовжиш звідти.</p>
             <h3>Введи код:</h3>
             <CodeLock
               key="gate"
@@ -92,7 +90,6 @@ export default function App() {
           <>
             {step.note && (
               <div className="note">
-                <b>📜 Записка №{step.noteNo}</b>
                 <p>{step.note}</p>
               </div>
             )}
